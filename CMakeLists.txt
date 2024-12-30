@@ -12,6 +12,7 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
   std_msgs
+  geographic_msgs
 )
 
 
@@ -31,7 +32,7 @@ include_directories(
 
 
 #catkin_install_python(PROGRAMS
-	#parser.py
+	#nmeaparser.py
 #  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 #)
 
