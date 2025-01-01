@@ -9,6 +9,9 @@ Modified by:    Dhanushka Liyanage
 
 
 Forked out from Kaarel's github.
+
+Additional packages needed:
+* geodesy
 """
 
 import rospy
