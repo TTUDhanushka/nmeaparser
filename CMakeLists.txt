@@ -15,8 +15,6 @@ find_package(catkin REQUIRED COMPONENTS
   geographic_msgs
 )
 
-
-
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES vision_module
@@ -24,18 +22,14 @@ catkin_package(
 #  DEPENDS system_lib
 )
 
-
-
 include_directories(
   ${catkin_INCLUDE_DIRS}
 )
-
 
 #catkin_install_python(PROGRAMS
 	#nmeaparser.py
 #  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 #)
-
 
 #install(PROGRAMS
 #IVDM_decoder.py

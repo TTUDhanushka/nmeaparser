@@ -18,7 +18,9 @@ import rospy
 from std_msgs.msg import Float32, String
 from geographic_msgs.msg import GeoPoint
 import socket
+import struct
 import time
+import math
 from threading import Thread, Lock
 from pyais import decode
 from pyais.exceptions import InvalidNMEAMessageException
@@ -157,7 +159,29 @@ class NMEA_Listener:
 
         rospy.loginfo("UDP Listener started on port %d", UDP_PORT)
 
-    # def decode_headng(self):
+    def get_checksum(self, payload_string) -> int:
+
+        payload_hex_lst = list(payload_string)
+        cumulative_xor = 0
+
+        for i in range(len(payload_hex_lst)):
+
+            int_from_ascii_char = ord(payload_hex_lst[i])
+            cumulative_xor ^= int_from_ascii_char
+
+        check_sum = hex(cumulative_xor)
+        return check_sum
+
+    def to_signed(self, value):
+
+        if value == 0x7FFF:
+            return 0
+        signed_value = value & 0xFFFF
+
+        if signed_value & 0x8000:
+            signed_value -= 0x10000
+
+        return signed_value
 
     def nmea_parser(self):
         # Publishers for Furuno SCX20 data
@@ -188,33 +212,111 @@ class NMEA_Listener:
                 rospy.loginfo("Received packet from %s:%d", addr[0], addr[1])
                 rospy.loginfo("Packet data: %s", message)
 
+                field_chars = list(message)
+                field_string = ''
+
+                for i in range(1, len(field_chars) - 3):
+                    field_string += field_chars[i]
+
+                check_sum = self.get_checksum(field_string)
+                rospy.loginfo(f'Message checksum: {check_sum}')
+
+                # Decoding NMEA 2000 messages
+                if message.startswith('$MXPGN'):
+                    nmea_split_strings = message.split(',')
+                    
+                    # Print the message content on terminal.
+                    rospy.loginfo(f"NMEA message components: {nmea_split_strings[0]} ; {nmea_split_strings[1]} ; {nmea_split_strings[2]} ; {nmea_split_strings[3]} : with number of parts = {len(nmea_split_strings)}")
+                    nmea_pgn_id = nmea_split_strings[1]
+
+                    # 1. PGN 127250 Heading
+                    if nmea_pgn_id == '01F112':
+                        rospy.loginfo(f'PGN127250 received: {nmea_split_strings[3]} and string length {len(nmea_split_strings[3])}')
+
+                        pgn_fields = list(nmea_split_strings[3])
+
+                        seq_id = int('0x' + pgn_fields[0] + pgn_fields[1], 16)
+
+                        # Compass heading
+                        heading_raw = int('0x' + pgn_fields[2] + pgn_fields[3] + pgn_fields[4] + pgn_fields[5], 16)
+                        heading_radians = self.to_signed(heading_raw) * 0.0001
+                        heading_degrees = (heading_radians * 180) / math.pi
+
+                        rospy.loginfo(f'Heading value: {heading_degrees} deg')
+
+                        # Heading deviation
+                        heading_deviation = int('0x' + pgn_fields[6] + pgn_fields[7], 16)
+
+                        # Heading variation
+                        heading_variation = int('0x' + pgn_fields[10] + pgn_fields[11], 16)
+
+                    # 2. PGN 127252 Heave
+                    elif nmea_pgn_id == '01F114':
+                        rospy.loginfo(f'PGN127252 received: {nmea_split_strings[3]} and string length {len(nmea_split_strings[3])}')
+
+                        pgn_fields = list(nmea_split_strings[3])
+
+                        seq_id = int('0x' + pgn_fields[0] + pgn_fields[1], 16)
+
+                        # Compass heading
+                        heave_raw = int('0x' + pgn_fields[2] + pgn_fields[3] + pgn_fields[4] + pgn_fields[5], 16)
+                        heave_radians = self.to_signed(heave_raw) * 0.0001
+                        heave_degrees = (heave_radians * 180) / math.pi
+                        
+                        rospy.loginfo(f'Heave value: {heave_degrees} deg')
+                    
+
+                    # 3. PGN 127257 Attitude
+                    elif nmea_pgn_id == '01F119':
+                        rospy.loginfo(f'PGN127257 received: {nmea_split_strings[3]} and string length {len(nmea_split_strings[3])}')
+
+                        pgn_fields = list(nmea_split_strings[3])
+
+                        seq_id = int('0x' + pgn_fields[0] + pgn_fields[1], 16)
+
+                        # Roll
+                        roll_raw = int('0x' + pgn_fields[2] + pgn_fields[3] + pgn_fields[4] + pgn_fields[5], 16)
+                        roll_radians = self.to_signed(roll_raw) * 0.0001
+                        roll_degrees = (roll_radians * 180) / math.pi
+
+                        # Pitch
+                        pitch_raw = int('0x' + pgn_fields[6] + pgn_fields[7]+ pgn_fields[8] + pgn_fields[9], 16)
+                        pitch_radians = self.to_signed(pitch_raw) * 0.0001
+                        pitch_degrees = (pitch_radians * 180) / math.pi
+
+                        # Yaw
+                        yaw_raw = int('0x' + pgn_fields[10] + pgn_fields[11] + pgn_fields[12] + pgn_fields[13], 16)
+                        yaw_radians = self.to_signed(yaw_raw) * 0.0001
+                        yaw_degrees = (yaw_radians * 180) / math.pi
+
+                        rospy.loginfo(f'Yaw: {yaw_degrees} deg, pitch: {pitch_degrees} deg, roll: {roll_degrees} deg')
 
                 # HEADING
                 if message.startswith('$HEHDT'):
-                    parts = message.split(',')
-                    heading = float(parts[1])
+                    nmea_split_strings = message.split(',')
+                    heading = float(nmea_split_strings[1])
                     heading_pub.publish(heading)
                     rospy.loginfo("Heading %f", heading)
 
                 # ROLL,PITCH,YAW
                 elif message.startswith('$YXXDR'):
-                    parts = message.split(',')
+                    nmea_split_strings = message.split(',')
 
-                    message_string_parts_count = len(parts)
+                    message_string_parts_count = len(nmea_split_strings)
                     rospy.loginfo("No of parts: %d", message_string_parts_count)
 
-                    if parts[1] == 'D' and message_string_parts_count == 5:
-                        heave = float(parts[2])
+                    if nmea_split_strings[1] == 'D' and message_string_parts_count == 5:
+                        heave = float(nmea_split_strings[2])
                         heave_pub.publish(heave)
                         
                         rospy.loginfo("Heave:%f", heave)
 
-                    if parts[1] == 'A' and message_string_parts_count > 10:
+                    if nmea_split_strings[1] == 'A' and message_string_parts_count > 10:
                         rospy.loginfo("Trying to read a short message")
 
-                        yaw = round(float(parts[2]), 1)
-                        pitch = round(float(parts[6]), 1)
-                        roll = round(float(parts[10]), 1)
+                        yaw = round(float(nmea_split_strings[2]), 1)
+                        pitch = round(float(nmea_split_strings[6]), 1)
+                        roll = round(float(nmea_split_strings[10]), 1)
 
                         yaw_pub.publish(yaw)
                         pitch_pub.publish(pitch)
@@ -222,10 +324,10 @@ class NMEA_Listener:
                         
                         rospy.loginfo("Attitude Roll:%.1f, Pitch:%f, Yaw:%.1f", roll,pitch,yaw)
 
-                    elif parts[1] == 'A' and message_string_parts_count == 9:
+                    elif nmea_split_strings[1] == 'A' and message_string_parts_count == 9:
 
-                        pitch = round(float(parts[2]), 1)
-                        roll = round(float(parts[6]),1)
+                        pitch = round(float(nmea_split_strings[2]), 1)
+                        roll = round(float(nmea_split_strings[6]),1)
 
                         pitch_pub.publish(pitch)
                         roll_pub.publish(roll)
@@ -234,31 +336,31 @@ class NMEA_Listener:
 
                 # WIND TEMPERATURE
                 elif message.startswith('$WIXDR'):
-                    parts = message.split(',')
+                    nmea_split_strings = message.split(',')
 
-                    message_string_parts_count = len(parts)
+                    message_string_parts_count = len(nmea_split_strings)
 
                     if message_string_parts_count < 5:
                         continue
 
-                    if parts[1] == 'C':
-                        wind_temperature = float(parts[2])
+                    if nmea_split_strings[1] == 'C':
+                        wind_temperature = float(nmea_split_strings[2])
                         rospy.loginfo("Wind temperature: %.1f", wind_temperature)
 
                 # LATITUDE, LONGITUDE
                 # Minimum GNSS sentence
                 elif message.startswith('$GPRMC'):
-                    parts = message.split(',')
+                    nmea_split_strings = message.split(',')
 
                     # Check if it is a valid message
-                    if parts[2] == 'A':
+                    if nmea_split_strings[2] == 'A':
                         # Data valid
 
                         # Extract latitude and longitude strings
-                        latitude_str = parts[3]
-                        latitude_direction = parts[4]
-                        longitude_str = parts[5]
-                        longitude_direction = parts[6]
+                        latitude_str = nmea_split_strings[3]
+                        latitude_direction = nmea_split_strings[4]
+                        longitude_str = nmea_split_strings[5]
+                        longitude_direction = nmea_split_strings[6]
 
                         # Convert latitude and longitude to float
                         # Latitude: DDMM.MMMMM -> DD + MM.MMMMM / 60
@@ -287,20 +389,20 @@ class NMEA_Listener:
 
                         rospy.loginfo("Latitude:%f, Longitude:%f", latitude, longitude)
 
-                    elif parts[2] == 'V':
+                    elif nmea_split_strings[2] == 'V':
                         # Data invalid
                         rospy.logerr("GNSS data invalid.")
                         continue
 
 
                 elif message.startswith('$GPGGA'):
-                    parts = message.split(',')
+                    nmea_split_strings = message.split(',')
 
                     # Extract latitude and longitude strings
-                    latitude_str = parts[2]
-                    latitude_direction = parts[3]
-                    longitude_str = parts[4]
-                    longitude_direction = parts[5]
+                    latitude_str = nmea_split_strings[2]
+                    latitude_direction = nmea_split_strings[3]
+                    longitude_str = nmea_split_strings[4]
+                    longitude_direction = nmea_split_strings[5]
 
                     # Convert latitude and longitude to float
                     # Latitude: DDMM.MMMMM -> DD + MM.MMMMM / 60
@@ -328,12 +430,12 @@ class NMEA_Listener:
 
                 # TRUE COURSE, SPEED IN KMH AND KNOTS
                 elif message.startswith('$GPVTG'):
-                    parts = message.split(',')
+                    nmea_split_strings = message.split(',')
 
                     # Extract the true course and speeds
-                    true_course = float(parts[1])
-                    ground_speed_knots = float(parts[5])
-                    ground_speed_kmh = float(parts[7])
+                    true_course = float(nmea_split_strings[1])
+                    ground_speed_knots = float(nmea_split_strings[5])
+                    ground_speed_kmh = float(nmea_split_strings[7])
                     speedkmh_pub.publish(ground_speed_kmh)
                     speedknots_pub.publish(ground_speed_knots)
                     truecourse_pub.publish(true_course)
