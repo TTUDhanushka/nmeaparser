@@ -245,7 +245,7 @@ class NMEA_Listener:
                         rospy.loginfo(f'Heading value: {heading_degrees} deg')
 
                         # Publish heading value to the heading topic
-                        heading_pub.publish(heading)
+                        heading_pub.publish(heading_degrees)
 
                         # Heading deviation
                         heading_deviation = int('0x' + pgn_fields[6] + pgn_fields[7], 16)
