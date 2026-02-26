@@ -219,7 +219,7 @@ class NMEA_Listener:
                     field_string += field_chars[i]
 
                 check_sum = self.get_checksum(field_string)
-                rospy.loginfo(f'Message checksum: {check_sum}')
+
 
                 # Decoding NMEA 2000 messages
                 if message.startswith('$MXPGN'):
@@ -242,7 +242,7 @@ class NMEA_Listener:
                         heading_radians = self.to_signed(heading_raw) * 0.0001
                         heading_degrees = (heading_radians * 180) / math.pi
 
-                        rospy.loginfo(f'Heading: {heading_degrees} deg')
+                        rospy.loginfo(f'Heading: {heading_degrees} deg | raw {heading_raw}')
 
                         # Publish heading value to the heading topic
                         heading_pub.publish(heading_degrees)
@@ -270,7 +270,7 @@ class NMEA_Listener:
 
                     # 3. PGN 127257 Attitude
                     elif nmea_pgn_id == '01F119':
-                        rospy.loginfo(f'PGN127257 received: {nmea_split_strings[3]} and string length {len(nmea_split_strings[3])}')
+                        rospy.loginfo(f'PGN127257 - Attitude: {nmea_split_strings[3]} ')
 
                         pgn_fields = list(nmea_split_strings[3])
 
@@ -308,7 +308,11 @@ class NMEA_Listener:
                         latitude_pub.publish(latitude_degrees)
                         longitude_pub.publish(longitude_degrees)
 
-                        rospy.loginfo(f'Latitude: {latitude_degrees}, Longitude: {longitude_degrees} | Raw values {latitude_raw} ; {longitude_raw}')
+                        rospy.loginfo(f'Latitude: {latitude_degrees}, Longitude: {longitude_degrees}')
+
+                    # 4. PGN 130578 Vessel speed components
+                    elif nmea_pgn_id == '01FE12':
+                        rospy.loginfo(f'PGN130578 - Vessel speed components ToDo: {nmea_split_strings[3]}')
 
                 # HEADING
                 if message.startswith('$HEHDT'):
