@@ -231,7 +231,7 @@ class NMEA_Listener:
 
                     # 1. PGN 127250 Heading
                     if nmea_pgn_id == '01F112':
-                        rospy.loginfo(f'PGN127250 received: {nmea_split_strings[3]} and string length {len(nmea_split_strings[3])}')
+                        rospy.loginfo(f'PGN127250 - Heading: {nmea_split_strings[3]}')
 
                         pgn_fields = list(nmea_split_strings[3])
 
@@ -242,7 +242,7 @@ class NMEA_Listener:
                         heading_radians = self.to_signed(heading_raw) * 0.0001
                         heading_degrees = (heading_radians * 180) / math.pi
 
-                        rospy.loginfo(f'Heading value: {heading_degrees} deg')
+                        rospy.loginfo(f'Heading: {heading_degrees} deg')
 
                         # Publish heading value to the heading topic
                         heading_pub.publish(heading_degrees)
@@ -255,7 +255,7 @@ class NMEA_Listener:
 
                     # 2. PGN 127252 Heave
                     elif nmea_pgn_id == '01F114':
-                        rospy.loginfo(f'PGN127252 received: {nmea_split_strings[3]} and string length {len(nmea_split_strings[3])}')
+                        rospy.loginfo(f'PGN127252 - Heave: {nmea_split_strings[3]}')
 
                         pgn_fields = list(nmea_split_strings[3])
 
@@ -263,10 +263,9 @@ class NMEA_Listener:
 
                         # Compass heading
                         heave_raw = int('0x' + pgn_fields[2] + pgn_fields[3] + pgn_fields[4] + pgn_fields[5], 16)
-                        heave_radians = self.to_signed(heave_raw) * 0.0001
-                        heave_degrees = (heave_radians * 180) / math.pi
+                        heave_meters = self.to_signed(heave_raw) * 0.01
                         
-                        rospy.loginfo(f'Heave value: {heave_degrees} deg')
+                        rospy.loginfo(f'Heave: {heave_meters} m')
                     
 
                     # 3. PGN 127257 Attitude
@@ -306,7 +305,7 @@ class NMEA_Listener:
                         longitude_raw = int('0x' + pgn_fields[8] + pgn_fields[9] + pgn_fields[10] + pgn_fields[11] + pgn_fields[12] + pgn_fields[13] + pgn_fields[14] + pgn_fields[15], 16)
                         longitude_degrees = self.to_signed(longitude_raw) * 1e-07
 
-                        rospy.loginfo(f'Latitude: {latitude_degrees}, Longitude: {longitude_degrees}')
+                        rospy.loginfo(f'Latitude: {latitude_degrees}, Longitude: {longitude_degrees} | Raw values {latitude_raw} ; {longitude_raw}')
 
                 # HEADING
                 if message.startswith('$HEHDT'):
