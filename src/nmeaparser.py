@@ -261,7 +261,7 @@ class NMEA_Listener:
 
                         seq_id = int('0x' + pgn_fields[0] + pgn_fields[1], 16)
 
-                        # Compass heading
+                        # Heave
                         heave_raw = int('0x' + pgn_fields[2] + pgn_fields[3] + pgn_fields[4] + pgn_fields[5], 16)
                         heave_meters = heave_raw * 0.01
                         
@@ -324,8 +324,25 @@ class NMEA_Listener:
                         rate_of_turn_radians = rate_of_turn_raw * 3.125e-08
                         rate_of_turn_degrees = (rate_of_turn_radians * 180) / math.pi
 
-                        rospy.loginfo(f'Rate of turn: {rate_of_turn_degrees}, degree/sec')
+                        if rate_of_turn_degrees > 360:
+                            rospy.loginfo(f'Rate of turn not provided by sensors.')
+                        else:
+                            rospy.loginfo(f'Rate of turn: {rate_of_turn_degrees}, degree/sec')
 
+                    # 7. PGN 129026 COG and SOG
+                    elif nmea_pgn_id == '01F802':
+                        rospy.loginfo(f'PGN129026 - COG and SOG: {nmea_split_strings[3]}')
+
+                        pgn_fields = list(nmea_split_strings[3])
+
+                        cog_raw = int('0x' + pgn_fields[4] + pgn_fields[5] + pgn_fields[6] + pgn_fields[7], 16)
+                        cog_radians = cog_raw * 0.001
+                        cog_degrees = (cog_radians * 180) / math.pi
+
+                        sog_raw = int('0x' + pgn_fields[8] + pgn_fields[9] + pgn_fields[10] + pgn_fields[11], 16)
+                        sog_meters_per_sec = sog_raw * 0.01
+
+                        rospy.loginfo(f'COG: {cog_degrees} degrees and SOG {sog_meters_per_sec}')
 
                 # HEADING
                 if message.startswith('$HEHDT'):
