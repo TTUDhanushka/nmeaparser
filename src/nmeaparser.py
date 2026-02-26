@@ -344,6 +344,25 @@ class NMEA_Listener:
 
                         rospy.loginfo(f'COG: {cog_degrees} degrees and SOG {sog_meters_per_sec}')
 
+                    # 8. PGN 130577 COG and SOG second option
+                    elif nmea_pgn_id == '01FE11':
+                        rospy.loginfo(f'PGN130577 - COG and SOG: {nmea_split_strings[3]}')
+
+                        pgn_fields = list(nmea_split_strings[3])
+
+                        cog_raw = int('0x' + pgn_fields[4] + pgn_fields[5] + pgn_fields[6] + pgn_fields[7], 16)
+                        cog_radians = cog_raw * 0.0001
+                        cog_degrees = (cog_radians * 180) / math.pi
+
+                        sog_raw = int('0x' + pgn_fields[8] + pgn_fields[9] + pgn_fields[10] + pgn_fields[11], 16)
+                        sog_meters_per_sec = sog_raw * 0.01
+
+                        heading_raw_2 = int('0x' + pgn_fields[12] + pgn_fields[13] + pgn_fields[14] + pgn_fields[15], 16)
+                        heading_radians_2 = heading_raw_2 * 0.0001
+                        heading_degrees_2 = (heading_radians_2 * 180) / math.pi
+
+                        rospy.loginfo(f'COG: {cog_degrees} degrees and SOG {sog_meters_per_sec} heading_2 {heading_degrees_2}')
+
                 # HEADING
                 if message.startswith('$HEHDT'):
                     nmea_split_strings = message.split(',')
