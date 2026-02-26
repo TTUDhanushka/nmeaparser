@@ -239,10 +239,10 @@ class NMEA_Listener:
 
                         # Compass heading
                         heading_raw = int('0x' + pgn_fields[2] + pgn_fields[3] + pgn_fields[4] + pgn_fields[5], 16)
-                        heading_radians = self.to_signed(heading_raw) * 0.0001
-                        heading_degrees = (heading_radians * 180) / math.pi
+                        heading_radians = heading_raw * 0.0001
+                        heading_degrees = (heading_radians * 360) / (2 * math.pi)
 
-                        rospy.loginfo(f'Heading: {heading_degrees} deg | raw {heading_raw}')
+                        rospy.loginfo(f'Heading: {heading_degrees} deg')
 
                         # Publish heading value to the heading topic
                         heading_pub.publish(heading_degrees)
@@ -263,7 +263,7 @@ class NMEA_Listener:
 
                         # Compass heading
                         heave_raw = int('0x' + pgn_fields[2] + pgn_fields[3] + pgn_fields[4] + pgn_fields[5], 16)
-                        heave_meters = self.to_signed(heave_raw) * 0.01
+                        heave_meters = heave_raw * 0.01
                         
                         rospy.loginfo(f'Heave: {heave_meters} m')
                     
