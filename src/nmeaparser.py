@@ -242,7 +242,7 @@ class NMEA_Listener:
                         heading_radians = heading_raw * 0.001
                         heading_degrees = (heading_radians * 360) / (2 * math.pi)
 
-                        rospy.loginfo(f'Heading: {heading_degrees} deg')
+                        rospy.loginfo(f'Heading: {heading_degrees:.2f} deg')
 
                         # Publish heading value to the heading topic
                         heading_pub.publish(heading_degrees)
@@ -291,7 +291,7 @@ class NMEA_Listener:
                         yaw_radians = self.to_signed(yaw_raw) * 0.0001
                         yaw_degrees = (yaw_radians * 180) / math.pi
 
-                        rospy.loginfo(f'Yaw: {yaw_degrees} deg, pitch: {pitch_degrees} deg, roll: {roll_degrees} deg')
+                        rospy.loginfo(f'Yaw: {yaw_degrees:.2f} deg, pitch: {pitch_degrees:.2f} deg, roll: {roll_degrees:.2f} deg')
 
                     # 4. PGN 129025 Position rapid update
                     elif nmea_pgn_id == '01F801':
@@ -338,11 +338,14 @@ class NMEA_Listener:
                         cog_raw = int('0x' + pgn_fields[4] + pgn_fields[5] + pgn_fields[6] + pgn_fields[7], 16)
                         cog_radians = cog_raw * 0.001
                         cog_degrees = (cog_radians * 180) / math.pi
+                        truecourse_pub.publish(cog_degrees)
 
                         sog_raw = int('0x' + pgn_fields[8] + pgn_fields[9] + pgn_fields[10] + pgn_fields[11], 16)
-                        sog_meters_per_sec = sog_raw * 0.01
+                        sog_meters_per_sec = sog_raw * 0.0001
+                        sog_km_per_hour = (sog_meters_per_sec * 36) / 10
+                        speedkmh_pub.publish(sog_km_per_hour)
 
-                        rospy.loginfo(f'COG: {cog_degrees} degrees and SOG {sog_meters_per_sec}')
+                        rospy.loginfo(f'COG: {cog_degrees:.2f} degrees and SOG {sog_km_per_hour:.2f} km/h')
 
                     # 8. PGN 130577 COG and SOG second option
                     elif nmea_pgn_id == '01FE11':
@@ -353,15 +356,18 @@ class NMEA_Listener:
                         cog_raw = int('0x' + pgn_fields[4] + pgn_fields[5] + pgn_fields[6] + pgn_fields[7], 16)
                         cog_radians = cog_raw * 0.0001
                         cog_degrees = (cog_radians * 180) / math.pi
+                        truecourse_pub.publish(cog_degrees)
 
                         sog_raw = int('0x' + pgn_fields[8] + pgn_fields[9] + pgn_fields[10] + pgn_fields[11], 16)
-                        sog_meters_per_sec = sog_raw * 0.01
+                        sog_meters_per_sec = sog_raw * 0.0001
+                        sog_km_per_hour = (sog_meters_per_sec * 36) / 10
+                        speedkmh_pub.publish(sog_km_per_hour)
 
                         heading_raw_2 = int('0x' + pgn_fields[12] + pgn_fields[13] + pgn_fields[14] + pgn_fields[15], 16)
                         heading_radians_2 = heading_raw_2 * 0.0001
                         heading_degrees_2 = (heading_radians_2 * 180) / math.pi
 
-                        rospy.loginfo(f'COG: {cog_degrees} degrees and SOG {sog_meters_per_sec} heading_2 {heading_degrees_2}')
+                        rospy.loginfo(f'COG: {cog_degrees} degrees and SOG {sog_km_per_hour} heading_2 {heading_degrees_2}')
 
                 # HEADING
                 if message.startswith('$HEHDT'):
