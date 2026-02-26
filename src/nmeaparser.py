@@ -294,6 +294,20 @@ class NMEA_Listener:
 
                         rospy.loginfo(f'Yaw: {yaw_degrees} deg, pitch: {pitch_degrees} deg, roll: {roll_degrees} deg')
 
+                    # 4. PGN 129025 Position rapid update
+                    elif nmea_pgn_id == '01F801':
+                        rospy.loginfo(f'PGN129025 - Position rapid update: {nmea_split_strings[3]}')
+
+                        pgn_fields = list(nmea_split_strings[3])
+
+                        latitude_raw = int('0x' + pgn_fields[0] + pgn_fields[1] + pgn_fields[2] + pgn_fields[3] + pgn_fields[4] + pgn_fields[5] + pgn_fields[6] + pgn_fields[7], 16)
+                        latitude_degrees = self.to_signed(latitude_raw) * 1e-07
+
+                        longitude_raw = int('0x' + pgn_fields[8] + pgn_fields[9] + pgn_fields[10] + pgn_fields[11] + pgn_fields[12] + pgn_fields[13] + pgn_fields[14] + pgn_fields[15], 16)
+                        longitude_degrees = self.to_signed(longitude_raw) * 1e-07
+
+                        rospy.loginfo(f'Latitude: {latitude_degrees}, Longitude: {longitude_degrees}')
+
                 # HEADING
                 if message.startswith('$HEHDT'):
                     nmea_split_strings = message.split(',')
