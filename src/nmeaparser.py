@@ -310,9 +310,22 @@ class NMEA_Listener:
 
                         rospy.loginfo(f'Latitude: {latitude_degrees}, Longitude: {longitude_degrees}')
 
-                    # 4. PGN 130578 Vessel speed components
+                    # 5. PGN 130578 Vessel speed components
                     elif nmea_pgn_id == '01FE12':
                         rospy.loginfo(f'PGN130578 - Vessel speed components ToDo: {nmea_split_strings[3]}')
+
+                    # 6. PGN 127251 Rate of turn
+                    elif nmea_pgn_id == '01F113':
+                        rospy.loginfo(f'PGN127251 - Rate of turn: {nmea_split_strings[3]}')
+
+                        pgn_fields = list(nmea_split_strings[3])
+
+                        rate_of_turn_raw = int('0x' + pgn_fields[2] + pgn_fields[3] + pgn_fields[4] + pgn_fields[5] + pgn_fields[6] + pgn_fields[7] + pgn_fields[8] + pgn_fields[9], 16)
+                        rate_of_turn_radians = rate_of_turn_raw * 3.125e-08
+                        rate_of_turn_degrees = (rate_of_turn_radians * 180) / math.pi
+
+                        rospy.loginfo(f'Rate of turn: {rate_of_turn_degrees}, degree/sec')
+
 
                 # HEADING
                 if message.startswith('$HEHDT'):
