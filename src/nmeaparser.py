@@ -338,12 +338,12 @@ class NMEA_Listener:
                         cog_raw = int('0x' + pgn_fields[4] + pgn_fields[5] + pgn_fields[6] + pgn_fields[7], 16)
                         cog_radians = cog_raw * 0.001
                         cog_degrees = (cog_radians * 180) / math.pi
-                        # truecourse_pub.publish(cog_degrees)
+                        truecourse_pub.publish(cog_degrees)
 
                         sog_raw = int('0x' + pgn_fields[8] + pgn_fields[9] + pgn_fields[10] + pgn_fields[11], 16)
                         sog_meters_per_sec = sog_raw * 0.0001
                         sog_km_per_hour = (sog_meters_per_sec * 36) / 10
-                        # speedkmh_pub.publish(sog_km_per_hour)
+                        speedkmh_pub.publish(sog_km_per_hour)
 
                         rospy.loginfo(f'COG: {cog_degrees:.2f} degrees and SOG {sog_km_per_hour:.2f} km/h')
 
@@ -356,12 +356,12 @@ class NMEA_Listener:
                         cog_raw = int('0x' + pgn_fields[4] + pgn_fields[5] + pgn_fields[6] + pgn_fields[7], 16)
                         cog_radians = cog_raw * 0.0001
                         cog_degrees = (cog_radians * 180) / math.pi
-                        truecourse_pub.publish(cog_degrees)
+                        # truecourse_pub.publish(cog_degrees)
 
                         sog_raw = int('0x' + pgn_fields[8] + pgn_fields[9] + pgn_fields[10] + pgn_fields[11], 16)
                         sog_meters_per_sec = sog_raw * 0.0001
                         sog_km_per_hour = (sog_meters_per_sec * 36) / 10
-                        speedkmh_pub.publish(sog_km_per_hour)
+                        # speedkmh_pub.publish(sog_km_per_hour)
 
                         heading_raw_2 = int('0x' + pgn_fields[12] + pgn_fields[13] + pgn_fields[14] + pgn_fields[15], 16)
                         heading_radians_2 = heading_raw_2 * 0.0001
