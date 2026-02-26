@@ -238,8 +238,8 @@ class NMEA_Listener:
                         seq_id = int('0x' + pgn_fields[0] + pgn_fields[1], 16)
 
                         # Compass heading
-                        heading_raw = int('0x' + pgn_fields[2] + pgn_fields[3] + pgn_fields[4] + pgn_fields[5], 16)
-                        heading_radians = heading_raw * 0.001
+                        heading_raw = int('0x' + pgn_fields[11] + pgn_fields[12] + pgn_fields[13] + pgn_fields[14], 16)
+                        heading_radians = heading_raw * 0.0001
                         heading_degrees = (heading_radians * 360) / (2 * math.pi)
 
                         rospy.loginfo(f'Heading: {heading_degrees:.2f} deg')
