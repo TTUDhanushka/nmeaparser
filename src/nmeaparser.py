@@ -299,11 +299,11 @@ class NMEA_Listener:
 
                         pgn_fields = list(nmea_split_strings[3])
 
-                        latitude_raw = int('0x' + pgn_fields[0] + pgn_fields[1] + pgn_fields[2] + pgn_fields[3] + pgn_fields[4] + pgn_fields[5] + pgn_fields[6] + pgn_fields[7], 16)
-                        latitude_degrees = latitude_raw * 1e-07
-
-                        longitude_raw = int('0x' + pgn_fields[8] + pgn_fields[9] + pgn_fields[10] + pgn_fields[11] + pgn_fields[12] + pgn_fields[13] + pgn_fields[14] + pgn_fields[15], 16)
+                        longitude_raw= int('0x' + pgn_fields[0] + pgn_fields[1] + pgn_fields[2] + pgn_fields[3] + pgn_fields[4] + pgn_fields[5] + pgn_fields[6] + pgn_fields[7], 16)
                         longitude_degrees = longitude_raw * 1e-07
+
+                        latitude_raw  = int('0x' + pgn_fields[8] + pgn_fields[9] + pgn_fields[10] + pgn_fields[11] + pgn_fields[12] + pgn_fields[13] + pgn_fields[14] + pgn_fields[15], 16)
+                        latitude_degrees = latitude_raw * 1e-07
 
                         latitude_pub.publish(latitude_degrees)
                         longitude_pub.publish(longitude_degrees)
