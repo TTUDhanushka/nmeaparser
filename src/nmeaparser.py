@@ -308,6 +308,9 @@ class NMEA_Listener:
                         latitude_pub.publish(latitude_degrees)
                         longitude_pub.publish(longitude_degrees)
 
+                        current_geo_point = GeoPoint(latitude_degrees, longitude_degrees, 0)
+                        geo_position_pub.publish(current_geo_point)
+
                         rospy.loginfo(f'Latitude: {latitude_degrees}, Longitude: {longitude_degrees}')
 
                     # 5. PGN 130578 Vessel speed components
